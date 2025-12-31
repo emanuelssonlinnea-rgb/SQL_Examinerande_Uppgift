@@ -62,12 +62,11 @@ Krav på data:
 SELECT * FROM Sales.SalesOrderHeader
 
 SELECT
-    MONTH(OrderDate) AS Month,
+    CAST(FORMAT(OrderDate, 'yyyy-MM-01')AS date) AS MonthStart,
     SUM(TotalDue) AS TotalSales
 FROM Sales.SalesOrderHeader soh
-WHERE DATEPART(year, OrderDate) = 2024
-GROUP BY MONTH(OrderDate)
-ORDER BY MONTH(OrderDate) ASC;
+GROUP BY FORMAT(OrderDate, 'yyyy-MM-01')
+ORDER BY MonthStart ASC;
 
 
 /*4: Försäljning och antal ordrar per år
@@ -165,3 +164,83 @@ LEFT JOIN Sales.Store s
     ON sc.StoreID = s.BusinessEntityID
 GROUP BY st.Name
 ORDER BY AvgOrderValue_Total DESC;  
+
+/*DJUPANALYS (för VG)
+För VG ska du göra allt från G-delen PLUS välja EN av följande djupanalyser:
+
+ALTERNATIV A: Regional försäljningsoptimering
+Analysfrågor:
+•	Vilken region presterar bäst/sämst?
+•	Vilka produktkategorier säljer bäst var?
+•	Finns säsongsmönster per region?
+•	Rekommendationer för förbättring?
+Du behöver:
+•	3-4 nya SQL-queries för att svara på dessa frågor
+•	Minst 1 pivot tables i pandas för att analysera data från olika vinklar
+•	3 nya visualiseringar (t.ex. heatmap region×kategori, linjediagram säsongsmönster, grupperat stapeldiagram)*/
+
+
+SELECT * FROM Sales.SalesTerritory
+SELECT * FROM Sales.SalesOrderHeader
+SELECT * FROM Production.Product
+SELECT * FROM Production.ProductCategory
+SELECT * FROM Sales.SalesOrderHeader
+SELECT * FROM Production.ProductSubcategory
+SELECT * FROM Sales.SalesOrderDetail
+
+--------------------------------------------------------------------------------------------------------------
+
+-- Vilken region presterar bäst/sämst?
+
+SELECT 
+    st.Name AS Regions,
+    SUM(soh.TotalDue) AS TotalSales
+FROM Sales.SalesTerritory st
+INNER JOIN Sales.SalesOrderHeader soh
+    ON st.TerritoryID = soh.TerritoryID
+GROUP BY st.Name
+ORDER BY SUM(soh.TotalDue) DESC;  
+
+-----------------------------------------------------------------------------------------------------------
+
+-- Vilka produktkategorier säljer bäst var?
+
+SELECT 
+    pc.Name AS CategoryName,
+    st.Name AS Regions,
+    SUM(soh.TotalDue) AS TotalSales    
+FROM Production.ProductCategory pc
+LEFT JOIN Production.ProductSubcategory ps
+    ON pc.ProductCategoryID = ps.ProductCategoryID
+INNER JOIN Production.Product p
+    ON ps.ProductSubcategoryID = p.ProductSubcategoryID
+INNER JOIN Sales.SalesOrderDetail so
+    ON p.ProductID = so.ProductID
+INNER JOIN Sales.SalesOrderHeader soh
+    ON so.SalesOrderID = soh.SalesOrderID
+INNER JOIN Sales.SalesTerritory st
+    ON soh.TerritoryID = st.TerritoryID
+GROUP BY pc.Name, st.Name
+ORDER BY TotalSales;
+
+
+-----------------------------------------------------------------------------------------------------------
+
+-- Finns säsongsmönster per region?
+
+SELECT * FROM Sales.SalesTerritory
+SELECT * FROM Sales.SalesOrderHeader
+
+SELECT
+    st.Name AS Region,
+    CAST(FORMAT(soh.OrderDate, 'yyyy-MM-01') AS date) AS MonthStart,
+    SUM(soh.TotalDue) AS TotalSales
+FROM Sales.SalesOrderHeader soh
+INNER JOIN Sales.SalesTerritory st
+    ON soh.TerritoryID = st.TerritoryID
+GROUP BY
+    st.Name,
+    FORMAT(soh.OrderDate, 'yyyy-MM-01')
+ORDER BY
+    st.Name,
+    MonthStart;
