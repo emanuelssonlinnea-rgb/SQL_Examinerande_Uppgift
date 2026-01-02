@@ -244,3 +244,48 @@ GROUP BY
 ORDER BY
     st.Name,
     MonthStart;
+
+------------------------------------------------------------------------------------------------------------
+
+-- Rekommendationer - Vad kan företaget göra baserat på denna analys? - pivot table med extra info 
+
+
+WITH TotalSalesPerYear AS (
+    SELECT 
+        st.Name AS Region,
+        YEAR(soh.OrderDate) AS Year,
+        COUNT(*) AS TotalOrders
+    FROM Sales.SalesOrderHeader soh
+    INNER JOIN Sales.SalesTerritory st
+        ON soh.TerritoryID = st.TerritoryID
+    GROUP BY st.Name, YEAR(soh.OrderDate)
+),
+SpecialOfferSales AS (
+    SELECT 
+        st.Name AS Region,
+        YEAR(soh.OrderDate) AS Year,
+        COUNT(DISTINCT soh.SalesOrderID) AS SpecialOfferOrders,
+        SUM(DISTINCT soh.TotalDue) AS SpecialOfferSales
+    FROM Sales.SalesOrderDetail sod
+    INNER JOIN Sales.SalesOrderHeader soh
+        ON sod.SalesOrderID = soh.SalesOrderID
+    INNER JOIN Sales.SalesTerritory st
+        ON soh.TerritoryID = st.TerritoryID
+    WHERE sod.SpecialOfferID <> 1   
+    GROUP BY st.Name, YEAR(soh.OrderDate)
+)
+SELECT
+    t.Region,
+    t.Year,
+    COALESCE(s.SpecialOfferOrders, 0) AS SpecialOfferOrders,
+    t.TotalOrders,
+    CAST(
+        COALESCE(s.SpecialOfferOrders, 0) * 100.0 / t.TotalOrders 
+        AS DECIMAL(5,2)
+    ) AS PercentageWithSpecialOffer,
+    COALESCE(s.SpecialOfferSales, 0) AS SpecialOfferSales
+FROM TotalSalesPerYear t
+LEFT JOIN SpecialOfferSales s
+    ON t.Region = s.Region
+   AND t.Year = s.Year
+ORDER BY t.Year, t.Region;
