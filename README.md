@@ -1,7 +1,7 @@
-# E-handel analys
+# AdventureWorks - Försäljningsanalys
 
 ## Introduction
-Projektet analyserar AdventureWorks-databasen för att kunna skapa visualiseringar som besvara affärsfrågor-
+Projektet analyserar AdventureWorks-databasen för att kunna skapa visualiseringar som besvarar affärsfrågor.
 
 I analysis.ipynb svarar vi på frågor:
 
