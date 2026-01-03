@@ -34,7 +34,7 @@ Djupanalys: Regional försäljningsoptimering
 I SQL_Queries.sql kan man se originalkalkyleringar i SQL för dessa frågor.
 
 ## Hur man kör projektet
-# klona projetet
+# klona projektet
 git clone https://github.com/emanuelssonlinnea-rgb/SQL_Examinerande_Uppgift.git
 # Skapa och aktivera virtuell miljö
 python -m venv .venv
